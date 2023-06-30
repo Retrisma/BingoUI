@@ -33,6 +33,7 @@ namespace Celeste.Mod.BingoUI
             BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 7 * 78f, CheckSeekersHit, 0, GFX.Game["predator61"]));
             BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 8 * 78f, CheckOshiroHits, 0, GFX.Game["boss35"]));
             BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 9 * 78f, CheckSnowballHits, 0, GFX.Game["snowball00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 10 * 78f, CheckKeys, 0, GFX.Game["key00"]));
         }
 
         public static void DestroyDisplayEntities() {
@@ -116,6 +117,11 @@ namespace Celeste.Mod.BingoUI
         private static int CheckSnowballHits()
         {
             return BingoModule.SaveData.SnowballHits;
+        }
+
+        private static int CheckKeys()
+        {
+            return BingoModule.SaveData.KeysList.Count;
         }
 
         private static void Pico8Timer(On.Celeste.Pico8.Classic.room_title.orig_draw draw, Pico8.Classic.room_title title)

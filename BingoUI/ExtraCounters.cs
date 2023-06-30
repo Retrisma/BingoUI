@@ -8,6 +8,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.Seeker.RegenerateBegin += RegenerateBegin;
             On.Celeste.AngryOshiro.HurtBegin += HurtBegin;
             On.Celeste.Snowball.OnPlayerBounce += OnPlayerBounce2;
+            On.Celeste.Key.OnPlayer += TrackKeys;
         }
 
         public static void Unload() {
@@ -15,6 +16,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.Seeker.RegenerateBegin -= RegenerateBegin;
             On.Celeste.AngryOshiro.HurtBegin -= HurtBegin;
             On.Celeste.Snowball.OnPlayerBounce -= OnPlayerBounce2;
+            On.Celeste.Key.OnPlayer -= TrackKeys;
         }
 
         private static EventInstance BinoHud(On.Celeste.Audio.orig_Play_string_Vector2 orig, string path, Vector2 position)
@@ -55,6 +57,24 @@ namespace Celeste.Mod.BingoUI {
         {
             BingoModule.SaveData.SnowballHits++;
             orig(snowball, player);
+        }
+
+        private static void TrackKeys(On.Celeste.Key.orig_OnPlayer orig, Key self, Player player) {
+            orig(self, player);
+
+            var area = BingoModule.CurrentLevel.Session.Area;
+            var keys = BingoModule.SaveData.KeysList;
+
+            bool matchFound = false;
+            foreach (Keys k in keys) {
+                if (k.areaID == area.ID && k.areaMode == (int)area.Mode && k.entity.Key == self.ID.Key) {
+                    matchFound = true;
+                    break;
+                }
+            }
+            if (!matchFound) {
+                keys.Add(new Keys(area, self.ID));
+            }
         }
     }
 }
