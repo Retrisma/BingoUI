@@ -9,6 +9,7 @@ namespace Celeste.Mod.BingoUI {
         public int SkipUsed = -1;
         public List<Binoculars> BinocularsList = new List<Binoculars>();
         public List<Keys> KeysList = new List<Keys>();
+        public List<int> ClearedAreas = new List<int>();
     }
 
     public class Binoculars

@@ -7,11 +7,14 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.BingoUI {
     public static class CustomProgression {
+        public static bool IsAssistSkipping = false; // HACK HACK HACK HACK
+
         public static void Load() {
             On.Celeste.SaveData.RegisterCompletion += CustomLevelUnlock;
             On.Celeste.OuiChapterSelect.Update += CustomAssistEnable;
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock += CustomAssist;
             On.Celeste.Audio.Play_string += Audio_Play_string;
+            On.Celeste.OuiChapterSelectIcon.Render += CustomIconRender;
         }
 
         public static void Unload() {
@@ -19,10 +22,29 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiChapterSelect.Update -= CustomAssistEnable;
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock -= CustomAssist;
             On.Celeste.Audio.Play_string -= Audio_Play_string;
+            On.Celeste.OuiChapterSelectIcon.Render -= CustomIconRender;
+        }
+
+        private static void CustomIconRender(On.Celeste.OuiChapterSelectIcon.orig_Render orig, OuiChapterSelectIcon self)
+        {
+            if (SaveData.Instance == null) {
+                orig(self);
+            } else {
+                var origUnlock = SaveData.Instance.UnlockedAreas_Safe;
+                if (BingoModule.Settings.Enabled && BingoModule.Settings.CustomProgression != ProgressionType.Vanilla) {
+                    SaveData.Instance.UnlockedAreas_Safe = self.Area;
+                }
+                orig(self);
+                SaveData.Instance.UnlockedAreas_Safe = origUnlock;
+            }
         }
 
         public static void CustomLevelUnlock(On.Celeste.SaveData.orig_RegisterCompletion register, SaveData saveData, Session session)
         {
+            var areas = BingoModule.SaveData.ClearedAreas;
+            if (!areas.Contains(session.Area.ID)) {
+                areas.Add(session.Area.ID);
+            }
             bool clearedCore = false;
             int oldProgress = 0;
             if(session.Area.ID == 9)
@@ -31,9 +53,9 @@ namespace Celeste.Mod.BingoUI {
                 oldProgress = saveData.UnlockedAreas_Safe;
             }
             register(saveData, session);
-            if (session.Area.ID == 5 && BingoModule.Settings.CustomProgression && BingoModule.Settings.Enabled)
+            if (session.Area.ID == 5 && BingoModule.Settings.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled)
                 saveData.UnlockedAreas_Safe = 7;
-            if (BingoModule.Settings.CustomProgression && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
+            if (BingoModule.Settings.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
                 saveData.UnlockedAreas_Safe = oldProgress;
         }
 
@@ -41,93 +63,95 @@ namespace Celeste.Mod.BingoUI {
 
         public static void CustomAssistEnable(On.Celeste.OuiChapterSelect.orig_Update update, OuiChapterSelect select)
         {
+            if (!BingoModule.Settings.Enabled || BingoModule.Settings.CustomProgression == ProgressionType.Vanilla || SaveData.Instance == null || select == null) {
+                update(select);
+                return;
+            }
+
+            List<OuiChapterSelectIcon> c = BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "icons") as List<OuiChapterSelectIcon>;
+            int b = (int)BingoUtils.GetInstanceProp(typeof(OuiChapterSelect), select, "area");
+            if (b > 10 || IsAssistSkipping) {
+                update(select);
+                return;
+            }
             
-            bool a = (BingoModule.Settings.Enabled && BingoModule.Settings.CustomProgression && SaveData.Instance != null && select != null);
-            int b = 0;
-            
-            int i = 1;
-            List<OuiChapterSelectIcon> c = new List<OuiChapterSelectIcon>() ;
             bool menuLeft = false;
             bool menuRight = false;
-            if (a)
-            {
-                b = (int)BingoUtils.GetInstanceProp(typeof(OuiChapterSelect), select, "area");
-                if (b > 10)
-                {
-                    update(select);
-                    return;
-                }
-                c = BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "icons") as List<OuiChapterSelectIcon>;
-                
-                
-                while ( i < 9 &&(SaveData.Instance.Areas_Safe[i].Modes[0].Completed || SaveData.Instance.Areas_Safe[i].Modes[1].HeartGem ||
-                    i + 1 == BingoModule.SaveData.SkipUsed || i == 6))
-                    i++;
-                if (i == 9 && Ch9Unlocked())
-                    i = 10;
+            int newArea = -1;
+            var bestUnlocked = 0;
+            SaveData.Instance.AssistMode = false;
 
-                if (SaveData.Instance.UnlockedAreas_Safe != i)
-                    SaveData.Instance.UnlockedAreas_Safe = i;
-            }
-            if (a && !SaveData.Instance.AssistMode && BingoModule.SaveData.SkipUsed == -1)
-                SaveData.Instance.AssistMode = true;
-            if (a && BingoModule.SaveData.SkipUsed >= 0)
-            {
-                
-                if (i == 7 && c[7].AssistModeUnlockable && (c[7].IsHidden || c[7].Position == c[7].HiddenPosition))
-                {
-                    c[7].Show();
-                    c[7].AssistModeUnlockable = false;
-                    c[7].Position = c[7].IdlePosition;
-                }
-                for (int j = 2; j < 9; j++)
-                    if (c[j].AssistModeUnlockable && j != BingoModule.SaveData.SkipUsed)
-                        c[j].Hide();
-            }
-            if(a && i < 9)
-            {
-                if (c[9].IsHidden && !c[0].IsHidden)
-                    c[9].Show();
-                else if (!c[9].IsHidden && c[0].IsHidden)
-                    c[9].Hide();
-                if (c[9].AssistModeUnlockable)
-                    c[9].AssistModeUnlockable = false;
-                if (c[9].Position == c[9].HiddenPosition && !c[9].IsHidden)
-                    c[9].Position = c[9].IdlePosition;
+            var specialHide = c[0].IsHidden || !((Engine.Scene as Overworld).Current is OuiChapterSelect);
 
-                if (Ch9Unlocked())
-                {
-                    if (c[10].IsHidden && !c[0].IsHidden)
-                        c[10].Show();
-                    else if (!c[10].IsHidden && c[0].IsHidden)
-                        c[10].Hide();
-                    if (c[10].AssistModeUnlockable)
-                        c[10].AssistModeUnlockable = false;
-                    if (c[10].Position == c[10].HiddenPosition && !c[10].IsHidden)
-                        c[10].Position = c[10].IdlePosition;
-                    if (c[10].HideIcon)
-                        c[10].HideIcon = false;
+            var statuses = ChapterStatuses();
+            for (var i = 1; i <= 10; i++) {
+                switch (statuses[i]) {
+                    case ChapterIconStatus.Hidden:
+                        if (!c[i].IsHidden) {
+                            c[i].Hide();
+                        }
+                        break;
+                    case ChapterIconStatus.Skippable:
+                        if (c[i].IsHidden && !specialHide) {
+                            c[i].Show();
+                        }
+                        bestUnlocked = i;
+                        c[i].New = false;
+                        c[i].AssistModeUnlockable = true;
+                        SaveData.Instance.AssistMode = true;
+                        break;
+                    case ChapterIconStatus.Excited:
+                        if (c[i].IsHidden && !specialHide) {
+                            c[i].Show();
+                        }
+                        bestUnlocked = i;
+                        c[i].New = true;
+                        c[i].AssistModeUnlockable = false;
+                        break;
+                    case ChapterIconStatus.Shown:
+                        if (c[i].IsHidden && !specialHide) {
+                            c[i].Show();
+                        }
+                        bestUnlocked = i;
+                        c[i].New = false;
+                        c[i].AssistModeUnlockable = false;
+                        break;
                 }
             }
-            
-            if(a)
-            {
-                bool disable = (bool)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "disableInput");
-                bool display = (bool)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "display");
-                float delay = (float)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "inputDelay");
 
-                if (select.Focused && display && !disable && delay <= Engine.DeltaTime)
-                {
-                    if (Input.MenuLeft.Pressed && b == 9 && c[8].IsHidden)
-                    {
-                        menuLeft = true;
+            SaveData.Instance.UnlockedAreas_Safe = bestUnlocked;
+
+            bool disable = (bool)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "disableInput");
+            bool display = (bool)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "display");
+            float delay = (float)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "inputDelay");
+
+            if (select.Focused && display && !disable && delay <= Engine.DeltaTime)
+            {
+                if (Input.MenuLeft.Pressed) {
+                    for (var i = b - 1; i >= 0; i--) {
+                        if (statuses[i] != ChapterIconStatus.Hidden) {
+                            menuLeft = true;
+                            newArea = i;
+                            Audio.Play("event:/ui/world_map/icon/roll_left");
+                            break;
+                        }
                     }
-                    else if (Input.MenuRight.Pressed && ((b <= 7 && c[b + 1].IsHidden)|| b == 8 || (b == 9 && !c[10].IsHidden)))
-                        menuRight = true;
+                }
+                if (Input.MenuRight.Pressed) {
+                    for (var i = b + 1; i <= 10; i++) {
+                        if (statuses[i] != ChapterIconStatus.Hidden) {
+                            menuRight = true;
+                            newArea = i;
+                            Audio.Play("event:/ui/world_map/icon/roll_right");
+                            break;
+                        }
+                    }
                 }
             }
             
-            if(a && b >= 9 && c[8].IsHidden && !Input.MenuUp.Pressed && !Input.MenuDown.Pressed)
+            var saved = SaveData.Instance.AssistMode;
+            SaveData.Instance.AssistMode = false;
+            if(b >= 9 && c[8].IsHidden && !Input.MenuUp.Pressed && !Input.MenuDown.Pressed)
             {
                 select.orig_Update();
             }
@@ -135,36 +159,13 @@ namespace Celeste.Mod.BingoUI {
             {
                 update(select);
             }
+            SaveData.Instance.AssistMode = saved;
             
 
 
             if (menuLeft || menuRight)
             {
-                int newArea = 0;
-                if (menuLeft)
-                {
-                    Audio.Play("event:/ui/world_map/icon/roll_left");
-                    newArea = b - 1;
-                    while (c[newArea].IsHidden && newArea > 0)
-                        newArea -= 1;
-                    c[newArea].Hovered(-1);
-                }
-                else if (menuRight)
-                {
-                    if(b == 9)
-                    {
-                        if (c[10].IsHidden)
-                            return;
-                        newArea = 10;
-                    }
-                    else if ((b <= 7 && c[b+1].IsHidden)||b == 8)
-                    {
-                        newArea = 9;
-                    }
-                    Audio.Play("event:/ui/world_map/icon/roll_right");
-                    c[newArea].Hovered(1);
-                }
-
+                c[newArea].Hovered(menuLeft ? -1 : 1);
                 BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
         | BindingFlags.Static;
                 FieldInfo delayField = typeof(OuiChapterSelect).GetField("inputDelay", bindFlags);
@@ -176,13 +177,11 @@ namespace Celeste.Mod.BingoUI {
                 
                 select.Overworld.Maddy.Hide(true);
             }
-            
-                
         }
 
         public static void CustomAssist(On.Celeste.OuiChapterSelectIcon.orig_AssistModeUnlock unlock, OuiChapterSelectIcon icon, Action onComplete)
         {
-            if(!BingoModule.Settings.Enabled || !BingoModule.Settings.CustomProgression)
+            if(!BingoModule.Settings.Enabled || BingoModule.Settings.CustomProgression == ProgressionType.Vanilla)
             {
                 unlock(icon, onComplete);
                 return;
@@ -203,8 +202,12 @@ namespace Celeste.Mod.BingoUI {
                 dd.Set<bool?>("attemptingSkip", false);
                 Audio.Play("cas_event:/ui/world_map/icon/assist_skip");
                 SaveData.Instance.AssistMode = false;
-                BingoModule.SaveData.SkipUsed = icon.Area;
-                unlock(icon, onComplete);
+                IsAssistSkipping = true;
+                unlock(icon, () => {
+                        BingoModule.SaveData.SkipUsed = icon.Area;
+                        IsAssistSkipping = false;
+                        onComplete();
+                });
                 return;
             }
 
@@ -213,14 +216,9 @@ namespace Celeste.Mod.BingoUI {
             oui.ShowInputUI = true;
         }
 
-        private static bool Ch9Unlocked()
-        {
-            return SaveData.Instance == null ? false : SaveData.Instance.Areas_Safe[4].Modes[0].Completed || SaveData.Instance.Areas_Safe[4].Modes[1].HeartGem || 5 == BingoModule.SaveData.SkipUsed;
-        }
-
         private static EventInstance Audio_Play_string(On.Celeste.Audio.orig_Play_string orig, string path)
         {
-            if (!BingoModule.Settings.CustomProgression || !BingoModule.Settings.Enabled)
+            if (BingoModule.Settings.CustomProgression == ProgressionType.Vanilla || !BingoModule.Settings.Enabled)
                 return orig(path);
             if (path == "event:/ui/world_map/icon/assist_skip")
                 return null;
@@ -228,5 +226,120 @@ namespace Celeste.Mod.BingoUI {
                 return orig("event:/ui/world_map/icon/assist_skip");
             return orig(path);
         }
+
+        public static List<ChapterIconStatus> ChapterStatuses() {
+            var result = new List<ChapterIconStatus>();
+            result.Add(ChapterIconStatus.Shown);
+            for (var i = 1; i <= 10; i++) {
+                result.Add(ChapterIconStatus.Hidden);
+            }
+            if (!result.Contains(0)) {
+                return result;
+            }
+
+            foreach (var i in BingoModule.SaveData.ClearedAreas) {
+                result[i] = ChapterIconStatus.Shown;
+            }
+            var levels = BingoModule.SaveData.ClearedAreas;
+            var skipped = BingoModule.SaveData.SkipUsed;
+            var canUseCore = levels.Contains(9);
+
+            switch (BingoModule.Settings.CustomProgression) {
+                case ProgressionType.Chocolate:
+                    result[0] = ChapterIconStatus.Excited;
+                    result[9] = ChapterIconStatus.Shown;
+                    if (levels.Contains(0)) {
+                        result[0] = ChapterIconStatus.Shown;
+                        result[1] = ChapterIconStatus.Excited;
+                    }
+                     if (levels.Contains(1) || skipped == 2) {
+                        result[1] = ChapterIconStatus.Shown;
+                        result[2] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(2) || skipped == 3) {
+                        result[2] = ChapterIconStatus.Shown;
+                        result[3] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(3) || skipped == 4) {
+                        result[3] = ChapterIconStatus.Shown;
+                        result[4] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(4) || skipped == 5) {
+                        result[4] = ChapterIconStatus.Shown;
+                        result[5] = ChapterIconStatus.Excited;
+                        result[10] = ChapterIconStatus.Shown;
+                    }
+                    if (levels.Contains(5) || skipped == 6) {
+                        result[5] = ChapterIconStatus.Shown;
+                        result[6] = ChapterIconStatus.Excited;
+                        result[7] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(7) || skipped == 8) {
+                        result[7] = ChapterIconStatus.Shown;
+                        result[8] = ChapterIconStatus.Excited;
+                    }
+                    if (BingoModule.SaveData.SkipUsed == -1) {
+                        for (var i = 0; i <= 10; i++) {
+                            if (result[i] == ChapterIconStatus.Hidden) {
+                                result[i] = ChapterIconStatus.Skippable;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case ProgressionType.Strawberry:
+                    Func<bool> coreCheck = () => {
+                        if (canUseCore) {
+                            canUseCore = false;
+                            return true;
+                        }
+                        return false;
+                    };
+                    result[0] = ChapterIconStatus.Excited;
+                    result[9] = ChapterIconStatus.Shown;
+                    if (levels.Contains(0) || coreCheck()) {
+                        result[0] = ChapterIconStatus.Shown;
+                        result[1] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(1) || skipped == 2 || coreCheck()) {
+                        result[1] = ChapterIconStatus.Shown;
+                        result[2] = ChapterIconStatus.Excited;
+                        result[4] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(2) || levels.Contains(4) || skipped == 3 || coreCheck()) {
+                        result[2] = ChapterIconStatus.Shown;
+                        result[4] = ChapterIconStatus.Shown;
+                        result[3] = ChapterIconStatus.Excited;
+                        result[5] = ChapterIconStatus.Excited;
+                        result[10] = ChapterIconStatus.Shown;
+                    }
+                    if (levels.Contains(3) || levels.Contains(5) || skipped == 6 || coreCheck()) {
+                        result[3] = ChapterIconStatus.Shown;
+                        result[5] = ChapterIconStatus.Shown;
+                        result[6] = ChapterIconStatus.Excited;
+                        result[7] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(6) || levels.Contains(7) || skipped == 8 || coreCheck()) {
+                        result[6] = ChapterIconStatus.Shown;
+                        result[7] = ChapterIconStatus.Shown;
+                        result[8] = ChapterIconStatus.Excited;
+                    }
+                    if (levels.Contains(8) || skipped == 8) {
+                        result[8] = ChapterIconStatus.Shown;
+                    }
+                    break;
+                default:
+                    throw new InvalidOperationException("forgot a case");
+            }
+
+            return result;
+        }
+    }
+
+    public enum ChapterIconStatus {
+        Hidden,
+        Skippable,
+        Excited,
+        Shown,
     }
 }

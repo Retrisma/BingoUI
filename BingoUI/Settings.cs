@@ -1,11 +1,17 @@
 namespace Celeste.Mod.BingoUI
 {
+    public enum ProgressionType {
+        Vanilla,
+        Chocolate,
+        Strawberry,
+    }
+
     public class BingoSettings : EverestModuleSettings
     {
         private bool enabled = true;
         public bool Enabled { get { return enabled; } set { if (value && BingoModule.CurrentLevel != null) BingoModule.LevelSetup(); else BingoModule.LevelTeardown(); enabled = value; } }
 
-        public bool CustomProgression { get; set; } = true;
+        public ProgressionType CustomProgression { get; set; } = ProgressionType.Chocolate;
 
         [SettingName("BINGO_UI_PREVENT_PROLOGUE_CUTSCENE_SKIPS")]
         public bool PreventPrologueCutsceneSkips { get; set; } = true;
