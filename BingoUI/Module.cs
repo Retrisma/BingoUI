@@ -85,7 +85,7 @@ namespace Celeste.Mod.BingoUI
                 BingoModule.LevelSetup();
                 if(BingoModule.Settings.AutoEnableVariants)
                     global::Celeste.SaveData.Instance.VariantMode = true;
-                if(BingoModule.Settings.CustomProgression != ProgressionType.Vanilla)
+                if(BingoModule.SaveData.CustomProgression != ProgressionType.Vanilla)
                     global::Celeste.SaveData.Instance.AssistMode = false;
             }
         }

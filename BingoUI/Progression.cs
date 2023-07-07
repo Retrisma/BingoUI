@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using FMOD.Studio;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.Utils;
 
@@ -15,6 +17,8 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock += CustomAssist;
             On.Celeste.Audio.Play_string += Audio_Play_string;
             On.Celeste.OuiChapterSelectIcon.Render += CustomIconRender;
+            On.Celeste.OuiFileSelectSlot.OnNewGameSelected += AssignFileProgression;
+            On.Celeste.OuiFileSelectSlot.Render += ShowBingoIcon;
         }
 
         public static void Unload() {
@@ -23,6 +27,29 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock -= CustomAssist;
             On.Celeste.Audio.Play_string -= Audio_Play_string;
             On.Celeste.OuiChapterSelectIcon.Render -= CustomIconRender;
+            On.Celeste.OuiFileSelectSlot.OnNewGameSelected -= AssignFileProgression;
+            On.Celeste.OuiFileSelectSlot.Render -= ShowBingoIcon;
+        }
+
+        private static void ShowBingoIcon(On.Celeste.OuiFileSelectSlot.orig_Render orig, OuiFileSelectSlot self)
+        {
+            if (self.SaveData != null && self.SaveData.HasFlag("BINGO")) {
+                var archie = GFX.Game["ARCHIE"];
+                var ease = Ease.CubeInOut((float)BingoUtils.GetInstanceField(typeof(OuiFileSelectSlot), self, "highlightEase"));
+                archie.Draw(self.Position + new Vector2(0, -10f) + new Vector2(-800f, 0f) * ease, new Vector2(), Color.White, 0.25f, 0f, SpriteEffects.None);
+                self.AssistModeEnabled = false;
+                self.VariantModeEnabled = false;
+            }
+            orig(self);
+        }
+
+        private static void AssignFileProgression(On.Celeste.OuiFileSelectSlot.orig_OnNewGameSelected orig, OuiFileSelectSlot self)
+        {
+            orig(self);
+            if (BingoModule.Settings.Enabled) {
+                BingoModule.SaveData.CustomProgression = BingoModule.Settings.CustomProgression;
+                SaveData.Instance.SetFlag("BINGO");
+            }
         }
 
         private static void CustomIconRender(On.Celeste.OuiChapterSelectIcon.orig_Render orig, OuiChapterSelectIcon self)
@@ -31,7 +58,7 @@ namespace Celeste.Mod.BingoUI {
                 orig(self);
             } else {
                 var origUnlock = SaveData.Instance.UnlockedAreas_Safe;
-                if (BingoModule.Settings.Enabled && BingoModule.Settings.CustomProgression != ProgressionType.Vanilla) {
+                if (BingoModule.Settings.Enabled && BingoModule.SaveData.CustomProgression != ProgressionType.Vanilla) {
                     SaveData.Instance.UnlockedAreas_Safe = self.Area;
                 }
                 orig(self);
@@ -53,9 +80,9 @@ namespace Celeste.Mod.BingoUI {
                 oldProgress = saveData.UnlockedAreas_Safe;
             }
             register(saveData, session);
-            if (session.Area.ID == 5 && BingoModule.Settings.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled)
+            if (session.Area.ID == 5 && BingoModule.SaveData.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled)
                 saveData.UnlockedAreas_Safe = 7;
-            if (BingoModule.Settings.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
+            if (BingoModule.SaveData.CustomProgression == ProgressionType.Chocolate && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
                 saveData.UnlockedAreas_Safe = oldProgress;
         }
 
@@ -63,7 +90,7 @@ namespace Celeste.Mod.BingoUI {
 
         public static void CustomAssistEnable(On.Celeste.OuiChapterSelect.orig_Update update, OuiChapterSelect select)
         {
-            if (!BingoModule.Settings.Enabled || BingoModule.Settings.CustomProgression == ProgressionType.Vanilla || SaveData.Instance == null || select == null) {
+            if (SaveData.Instance == null || select == null || !BingoModule.Settings.Enabled || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla) {
                 update(select);
                 return;
             }
@@ -181,7 +208,7 @@ namespace Celeste.Mod.BingoUI {
 
         public static void CustomAssist(On.Celeste.OuiChapterSelectIcon.orig_AssistModeUnlock unlock, OuiChapterSelectIcon icon, Action onComplete)
         {
-            if(!BingoModule.Settings.Enabled || BingoModule.Settings.CustomProgression == ProgressionType.Vanilla)
+            if(!BingoModule.Settings.Enabled || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla)
             {
                 unlock(icon, onComplete);
                 return;
@@ -218,7 +245,7 @@ namespace Celeste.Mod.BingoUI {
 
         private static EventInstance Audio_Play_string(On.Celeste.Audio.orig_Play_string orig, string path)
         {
-            if (BingoModule.Settings.CustomProgression == ProgressionType.Vanilla || !BingoModule.Settings.Enabled)
+            if (SaveData.Instance == null || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla || !BingoModule.Settings.Enabled)
                 return orig(path);
             if (path == "event:/ui/world_map/icon/assist_skip")
                 return null;
@@ -244,7 +271,7 @@ namespace Celeste.Mod.BingoUI {
             var skipped = BingoModule.SaveData.SkipUsed;
             var canUseCore = levels.Contains(9);
 
-            switch (BingoModule.Settings.CustomProgression) {
+            switch (BingoModule.SaveData.CustomProgression) {
                 case ProgressionType.Chocolate:
                     result[0] = ChapterIconStatus.Excited;
                     result[9] = ChapterIconStatus.Shown;

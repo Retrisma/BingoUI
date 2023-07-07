@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.BingoUI {
     public class BingoSaveData : EverestModuleSaveData {
+        public ProgressionType CustomProgression = ProgressionType.Vanilla;
         public int SeekersHit = 0;
         public int OshiroHits = 0;
         public int SnowballHits = 0;
