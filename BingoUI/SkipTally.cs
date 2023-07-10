@@ -1,9 +1,9 @@
-using System;
+﻿using System;
+using System.Reflection;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using System.Reflection;
-using static Monocle.MInput;
 using MonoMod.Utils;
+using static Monocle.MInput;
 
 namespace Celeste.Mod.BingoUI {
     public static class SkipTallyWithConfirm {
@@ -18,18 +18,15 @@ namespace Celeste.Mod.BingoUI {
             customTally = null;
         }
 
-        private static void SkipTally3(ILContext il)
-        {
+        private static void SkipTally3(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 
-            if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchCallvirt<KeyboardData>("Pressed")))
-            {
+            if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchCallvirt<KeyboardData>("Pressed"))) {
                 cursor.EmitDelegate<Func<bool, bool>>(checkConfirm);
             }
         }
 
-        private static bool checkConfirm(bool a)
-        {
+        private static bool checkConfirm(bool a) {
             if (BingoModule.Settings.Enabled && BingoModule.Settings.SkipTallyWithConfirm)
                 return a || Input.MenuConfirm.Pressed;
             return a;

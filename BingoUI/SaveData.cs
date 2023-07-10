@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.BingoUI {
@@ -13,28 +13,24 @@ namespace Celeste.Mod.BingoUI {
         public List<int> ClearedAreas = new List<int>();
     }
 
-    public class Binoculars
-    {
+    public class Binoculars {
         public int areaID;
         public int areaMode;
         public Vector2 pos;
 
-        public Binoculars(AreaKey lv, Vector2 myPos)
-        {
+        public Binoculars(AreaKey lv, Vector2 myPos) {
             areaID = lv.ID;
             areaMode = (int)lv.Mode;
             pos = myPos;
         }
     }
 
-    public class Keys
-    {
+    public class Keys {
         public int areaID;
         public int areaMode;
         public EntityID entity;
 
-        public Keys(AreaKey lv, EntityID entity)
-        {
+        public Keys(AreaKey lv, EntityID entity) {
             areaID = lv.ID;
             areaMode = (int)lv.Mode;
             this.entity = entity;

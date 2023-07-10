@@ -1,5 +1,5 @@
+﻿using FMOD.Studio;
 using Microsoft.Xna.Framework;
-using FMOD.Studio;
 
 namespace Celeste.Mod.BingoUI {
     public static class ExtraCounters {
@@ -19,13 +19,11 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.Key.OnPlayer -= TrackKeys;
         }
 
-        private static EventInstance BinoHud(On.Celeste.Audio.orig_Play_string_Vector2 orig, string path, Vector2 position)
-        {
+        private static EventInstance BinoHud(On.Celeste.Audio.orig_Play_string_Vector2 orig, string path, Vector2 position) {
             var binos = BingoModule.SaveData.BinocularsList;
             var area = BingoModule.CurrentLevel.Session.Area;
 
-            if (path == "event:/game/general/lookout_use")
-            {
+            if (path == "event:/game/general/lookout_use") {
                 bool matchFound = false;
                 foreach (Binoculars b in binos) {
                     if (b.areaID == area.ID && b.areaMode == (int)area.Mode && b.pos.Equals(position)) {
@@ -40,21 +38,18 @@ namespace Celeste.Mod.BingoUI {
             return orig(path, position);
         }
 
-        private static void RegenerateBegin(On.Celeste.Seeker.orig_RegenerateBegin orig, Seeker seeker)
-        {
+        private static void RegenerateBegin(On.Celeste.Seeker.orig_RegenerateBegin orig, Seeker seeker) {
 
             BingoModule.SaveData.SeekersHit++;
             orig(seeker);
         }
 
-        private static void HurtBegin(On.Celeste.AngryOshiro.orig_HurtBegin orig, AngryOshiro oshiro)
-        {
+        private static void HurtBegin(On.Celeste.AngryOshiro.orig_HurtBegin orig, AngryOshiro oshiro) {
             BingoModule.SaveData.OshiroHits++;
             orig(oshiro);
         }
 
-        private static void OnPlayerBounce2(On.Celeste.Snowball.orig_OnPlayerBounce orig, Snowball snowball, Player player)
-        {
+        private static void OnPlayerBounce2(On.Celeste.Snowball.orig_OnPlayerBounce orig, Snowball snowball, Player player) {
             BingoModule.SaveData.SnowballHits++;
             orig(snowball, player);
         }

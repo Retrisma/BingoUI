@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using FMOD.Studio;
@@ -31,8 +31,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiFileSelectSlot.Render -= ShowBingoIcon;
         }
 
-        private static void ShowBingoIcon(On.Celeste.OuiFileSelectSlot.orig_Render orig, OuiFileSelectSlot self)
-        {
+        private static void ShowBingoIcon(On.Celeste.OuiFileSelectSlot.orig_Render orig, OuiFileSelectSlot self) {
             if (self.SaveData != null && self.SaveData.HasFlag("BINGO")) {
                 var archie = GFX.Game["ARCHIE"];
                 var ease = Ease.CubeInOut((float)BingoUtils.GetInstanceField(typeof(OuiFileSelectSlot), self, "highlightEase"));
@@ -43,8 +42,7 @@ namespace Celeste.Mod.BingoUI {
             orig(self);
         }
 
-        private static void AssignFileProgression(On.Celeste.OuiFileSelectSlot.orig_OnNewGameSelected orig, OuiFileSelectSlot self)
-        {
+        private static void AssignFileProgression(On.Celeste.OuiFileSelectSlot.orig_OnNewGameSelected orig, OuiFileSelectSlot self) {
             orig(self);
             if (BingoModule.Settings.Enabled) {
                 BingoModule.SaveData.CustomProgression = BingoModule.Settings.CustomProgression;
@@ -52,8 +50,7 @@ namespace Celeste.Mod.BingoUI {
             }
         }
 
-        private static void CustomIconRender(On.Celeste.OuiChapterSelectIcon.orig_Render orig, OuiChapterSelectIcon self)
-        {
+        private static void CustomIconRender(On.Celeste.OuiChapterSelectIcon.orig_Render orig, OuiChapterSelectIcon self) {
             if (SaveData.Instance == null) {
                 orig(self);
             } else {
@@ -66,16 +63,14 @@ namespace Celeste.Mod.BingoUI {
             }
         }
 
-        public static void CustomLevelUnlock(On.Celeste.SaveData.orig_RegisterCompletion register, SaveData saveData, Session session)
-        {
+        public static void CustomLevelUnlock(On.Celeste.SaveData.orig_RegisterCompletion register, SaveData saveData, Session session) {
             var areas = BingoModule.SaveData.ClearedAreas;
             if (!areas.Contains(session.Area.ID)) {
                 areas.Add(session.Area.ID);
             }
             bool clearedCore = false;
             int oldProgress = 0;
-            if(session.Area.ID == 9)
-            {
+            if (session.Area.ID == 9) {
                 clearedCore = true;
                 oldProgress = saveData.UnlockedAreas_Safe;
             }
@@ -88,8 +83,7 @@ namespace Celeste.Mod.BingoUI {
 
 
 
-        public static void CustomAssistEnable(On.Celeste.OuiChapterSelect.orig_Update update, OuiChapterSelect select)
-        {
+        public static void CustomAssistEnable(On.Celeste.OuiChapterSelect.orig_Update update, OuiChapterSelect select) {
             if (SaveData.Instance == null || select == null || !BingoModule.Settings.Enabled || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla) {
                 update(select);
                 return;
@@ -101,7 +95,7 @@ namespace Celeste.Mod.BingoUI {
                 update(select);
                 return;
             }
-            
+
             bool menuLeft = false;
             bool menuRight = false;
             int newArea = -1;
@@ -152,8 +146,7 @@ namespace Celeste.Mod.BingoUI {
             bool display = (bool)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "display");
             float delay = (float)BingoUtils.GetInstanceField(typeof(OuiChapterSelect), select, "inputDelay");
 
-            if (select.Focused && display && !disable && delay <= Engine.DeltaTime)
-            {
+            if (select.Focused && display && !disable && delay <= Engine.DeltaTime) {
                 if (Input.MenuLeft.Pressed) {
                     for (var i = b - 1; i >= 0; i--) {
                         if (statuses[i] != ChapterIconStatus.Hidden) {
@@ -175,23 +168,19 @@ namespace Celeste.Mod.BingoUI {
                     }
                 }
             }
-            
+
             var saved = SaveData.Instance.AssistMode;
             SaveData.Instance.AssistMode = false;
-            if(b >= 9 && c[8].IsHidden && !Input.MenuUp.Pressed && !Input.MenuDown.Pressed)
-            {
+            if (b >= 9 && c[8].IsHidden && !Input.MenuUp.Pressed && !Input.MenuDown.Pressed) {
                 select.orig_Update();
-            }
-            else
-            {
+            } else {
                 update(select);
             }
             SaveData.Instance.AssistMode = saved;
-            
 
 
-            if (menuLeft || menuRight)
-            {
+
+            if (menuLeft || menuRight) {
                 c[newArea].Hovered(menuLeft ? -1 : 1);
                 BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
         | BindingFlags.Static;
@@ -200,40 +189,36 @@ namespace Celeste.Mod.BingoUI {
                 PropertyInfo setNewArea = typeof(OuiChapterSelect).GetProperty("area", bindFlags);
                 setNewArea.SetValue(select, newArea);
                 MethodInfo ease = typeof(OuiChapterSelect).GetMethod("EaseCamera", bindFlags);
-                ease.Invoke(select, new object[] {});
-                
+                ease.Invoke(select, new object[] { });
+
                 select.Overworld.Maddy.Hide(true);
             }
         }
 
-        public static void CustomAssist(On.Celeste.OuiChapterSelectIcon.orig_AssistModeUnlock unlock, OuiChapterSelectIcon icon, Action onComplete)
-        {
-            if(!BingoModule.Settings.Enabled || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla)
-            {
+        public static void CustomAssist(On.Celeste.OuiChapterSelectIcon.orig_AssistModeUnlock unlock, OuiChapterSelectIcon icon, Action onComplete) {
+            if (!BingoModule.Settings.Enabled || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla) {
                 unlock(icon, onComplete);
                 return;
             }
 
             Overworld oui = Engine.Scene as Overworld;
             OuiChapterSelect cselect = oui?.GetUI<OuiChapterSelect>();
-            if (cselect == null)
-            {
+            if (cselect == null) {
                 unlock(icon, onComplete);
                 return;
             }
 
             DynData<OuiChapterSelectIcon> dd = new DynData<OuiChapterSelectIcon>(icon);
 
-            if (dd.Get<bool?>("attemptingSkip") ?? false)
-            {
+            if (dd.Get<bool?>("attemptingSkip") ?? false) {
                 dd.Set<bool?>("attemptingSkip", false);
                 Audio.Play("cas_event:/ui/world_map/icon/assist_skip");
                 SaveData.Instance.AssistMode = false;
                 IsAssistSkipping = true;
                 unlock(icon, () => {
-                        BingoModule.SaveData.SkipUsed = icon.Area;
-                        IsAssistSkipping = false;
-                        onComplete();
+                    BingoModule.SaveData.SkipUsed = icon.Area;
+                    IsAssistSkipping = false;
+                    onComplete();
                 });
                 return;
             }
@@ -243,8 +228,7 @@ namespace Celeste.Mod.BingoUI {
             oui.ShowInputUI = true;
         }
 
-        private static EventInstance Audio_Play_string(On.Celeste.Audio.orig_Play_string orig, string path)
-        {
+        private static EventInstance Audio_Play_string(On.Celeste.Audio.orig_Play_string orig, string path) {
             if (SaveData.Instance == null || BingoModule.SaveData.CustomProgression == ProgressionType.Vanilla || !BingoModule.Settings.Enabled)
                 return orig(path);
             if (path == "event:/ui/world_map/icon/assist_skip")
@@ -279,7 +263,7 @@ namespace Celeste.Mod.BingoUI {
                         result[0] = ChapterIconStatus.Shown;
                         result[1] = ChapterIconStatus.Excited;
                     }
-                     if (levels.Contains(1) || skipped == 2) {
+                    if (levels.Contains(1) || skipped == 2) {
                         result[1] = ChapterIconStatus.Shown;
                         result[2] = ChapterIconStatus.Excited;
                     }

@@ -1,11 +1,9 @@
-using System;
+﻿using System;
 using System.Reflection;
 
-namespace Celeste.Mod.BingoUI
-{
+namespace Celeste.Mod.BingoUI {
     public static class BingoUtils {
-        internal static object GetInstanceField(Type type, object instance, string fieldName)
-        {
+        internal static object GetInstanceField(Type type, object instance, string fieldName) {
             BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
         | BindingFlags.Static;
             FieldInfo field = type.GetField(fieldName, bindFlags);
@@ -14,8 +12,7 @@ namespace Celeste.Mod.BingoUI
             return field.GetValue(instance);
         }
 
-        internal static object GetInstanceProp(Type type, object instance, string fieldName)
-        {
+        internal static object GetInstanceProp(Type type, object instance, string fieldName) {
             BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
         | BindingFlags.Static;
             PropertyInfo prop = type.GetProperty(fieldName, bindFlags);
@@ -23,11 +20,10 @@ namespace Celeste.Mod.BingoUI
             if (getter == null || prop == null || instance == null)
                 return null;
 
-            return getter.Invoke(instance,null);
+            return getter.Invoke(instance, null);
         }
 
-        internal static MethodInfo GetInstanceMethod(Type type, string methodName)
-        {
+        internal static MethodInfo GetInstanceMethod(Type type, string methodName) {
             BindingFlags bindFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
         | BindingFlags.Static;
             MethodInfo method = type.GetMethod(methodName, bindFlags);

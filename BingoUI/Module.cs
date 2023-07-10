@@ -1,12 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using MonoMod.RuntimeDetour;
 using Monocle;
+using MonoMod.RuntimeDetour;
 
-namespace Celeste.Mod.BingoUI
-{
-    public class BingoModule : EverestModule
-    {
+namespace Celeste.Mod.BingoUI {
+    public class BingoModule : EverestModule {
         public static BingoModule Instance;
         public BingoModule() {
             Instance = this;
@@ -18,8 +16,7 @@ namespace Celeste.Mod.BingoUI
         public static BingoSaveData SaveData => (BingoSaveData)Instance._SaveData;
         public static Level CurrentLevel;
 
-        public override void Load()
-        {
+        public override void Load() {
             OuiJournalBinoculars.Load();
             HideControls.Load();
             ProloguePauseDisable.Load();
@@ -49,8 +46,7 @@ namespace Celeste.Mod.BingoUI
             On.Celeste.Level.UnloadLevel -= UnloadLevel;
         }
 
-        public static void LevelSetup()
-        {
+        public static void LevelSetup() {
             if (CurrentLevel == null) {
                 return;
             }
@@ -62,8 +58,7 @@ namespace Celeste.Mod.BingoUI
             }
         }
 
-        public static void LevelTeardown()
-        {
+        public static void LevelTeardown() {
             if (CurrentLevel == null) {
                 return;
             }
@@ -75,25 +70,22 @@ namespace Celeste.Mod.BingoUI
             }
         }
 
-        private static void LoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader)
-        {
+        private static void LoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
             CurrentLevel = level;
             orig(level, playerIntro, isFromLoader);
-            
-            if (BingoModule.Settings.Enabled)
-            {
+
+            if (BingoModule.Settings.Enabled) {
                 BingoModule.LevelSetup();
-                if(BingoModule.Settings.AutoEnableVariants)
+                if (BingoModule.Settings.AutoEnableVariants)
                     global::Celeste.SaveData.Instance.VariantMode = true;
-                if(BingoModule.SaveData.CustomProgression != ProgressionType.Vanilla)
+                if (BingoModule.SaveData.CustomProgression != ProgressionType.Vanilla)
                     global::Celeste.SaveData.Instance.AssistMode = false;
             }
         }
 
-        private void UnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level level)
-        {
+        private void UnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level level) {
             orig(level);
             CurrentLevel = null;
         }
-    }    
+    }
 }

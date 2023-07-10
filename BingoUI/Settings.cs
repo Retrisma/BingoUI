@@ -1,13 +1,11 @@
-namespace Celeste.Mod.BingoUI
-{
+﻿namespace Celeste.Mod.BingoUI {
     public enum ProgressionType {
         Vanilla,
         Chocolate,
         Strawberry,
     }
 
-    public class BingoSettings : EverestModuleSettings
-    {
+    public class BingoSettings : EverestModuleSettings {
         private bool enabled = true;
         public bool Enabled { get { return enabled; } set { if (value && BingoModule.CurrentLevel != null) BingoModule.LevelSetup(); else BingoModule.LevelTeardown(); enabled = value; } }
 
