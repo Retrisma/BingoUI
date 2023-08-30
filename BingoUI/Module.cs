@@ -1,7 +1,7 @@
 ﻿using System;
+using FMOD.Studio;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using Monocle;
-using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.BingoUI {
     public class BingoModule : EverestModule {
@@ -46,6 +46,55 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.Level.UnloadLevel -= UnloadLevel;
         }
 
+        public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+            base.CreateModMenuSection(menu, inGame, snapshot);
+
+            foreach (var item in menu.Items) {
+                if (!(item is TextMenu.Slider btn) || !btn.Label.StartsWith(Dialog.Clean("modoptions_bingo_customprogression"))) {
+                    continue;
+                }
+
+                var messageHeader = new TextMenuExt.EaseInSubHeaderExt("xxx", false, menu) {
+                    HeightExtra = 17f,
+                    Offset = new Vector2(30, -5),
+                };
+                var origAction = btn.OnValueChange;
+                btn.OnValueChange = (newValue) => {
+                    if (origAction != null) {
+                        origAction(newValue);
+                    }
+                    this.SetFlavorText(messageHeader, (ProgressionType)Enum.GetValues(typeof(ProgressionType)).GetValue(newValue));
+                };
+                this.SetFlavorText(messageHeader, (ProgressionType)Enum.GetValues(typeof(ProgressionType)).GetValue(btn.Index));
+
+                menu.Insert(menu.Items.IndexOf(item) + 1, messageHeader);
+                btn.OnEnter = () => messageHeader.FadeVisible = true;
+                btn.OnLeave = () => messageHeader.FadeVisible = false;
+                break;
+            }
+        }
+
+        private void SetFlavorText(TextMenuExt.EaseInSubHeaderExt label, ProgressionType flavor) {
+            var words = Dialog.Clean($"bingoui_progression_{flavor.ToString()}").Split(' ');
+            var line = new List<string>();
+            var lineWidth = 0;
+            var text = "";
+            foreach (var word in words) {
+                line.Add(word);
+                var wordMeasure = ActiveFont.Measure(word);
+                lineWidth += (int)wordMeasure.X + 10;
+                if (lineWidth > 1300) {
+                    text += string.Join(" ", line) + "\n";
+                    lineWidth = 0;
+                    line.Clear();
+                }
+            }
+            if (line.Count != 0) {
+                text += string.Join(" ", line) + "\n";
+            }
+            label.Title = text.TrimEnd('\n');
+        }
+
         public static void LevelSetup() {
             if (CurrentLevel == null) {
                 return;
@@ -78,7 +127,7 @@ namespace Celeste.Mod.BingoUI {
                 BingoModule.LevelSetup();
                 if (BingoModule.Settings.AutoEnableVariants)
                     global::Celeste.SaveData.Instance.VariantMode = true;
-                if (BingoModule.SaveData.CustomProgression != ProgressionType.Vanilla)
+                if (BingoModule.SaveData.CustomProgression != ProgressionType.None)
                     global::Celeste.SaveData.Instance.AssistMode = false;
             }
         }

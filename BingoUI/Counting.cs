@@ -24,14 +24,15 @@ namespace Celeste.Mod.BingoUI {
         public static void CreateDisplayEntities() {
             BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 1 * 78f, CheckWingedBerries, 0, GFX.Game["wings02"]));
             BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 2 * 78f, CheckSeedBerries, 0, GFX.Game["seed00"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(136f + 3 * 78f, CheckCassettes, 1, GFX.Gui["collectables/cassette"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(136f + 4 * 78f, CheckBlueHearts, 1, GFX.Gui["collectables/heartgem/0/spin00"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(136f + 5 * 78f, CheckRedHearts, 1, GFX.Gui["collectables/heartgem/1/spin00"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 6 * 78f, CheckBinoculars, 2, GFX.Game["lookout05"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 7 * 78f, CheckSeekersHit, 0, GFX.Game["predator61"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 8 * 78f, CheckOshiroHits, 0, GFX.Game["boss35"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 9 * 78f, CheckSnowballHits, 0, GFX.Game["snowball00"]));
-            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(176f + 10 * 78f, CheckKeys, 0, GFX.Game["key00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 3 * 78f, CheckCassettes, 1, GFX.Gui["collectables/cassette"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 4 * 78f, CheckBlueHearts, 1, GFX.Gui["collectables/heartgem/0/spin00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 5 * 78f, CheckRedHearts, 1, GFX.Gui["collectables/heartgem/1/spin00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 6 * 78f, CheckYellowHearts, 1, GFX.Gui["collectables/heartgem/2/spin00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 7 * 78f, CheckBinoculars, 2, GFX.Game["lookout05"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 8 * 78f, CheckSeekersHit, 0, GFX.Game["predator61"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 9 * 78f, CheckOshiroHits, 0, GFX.Game["boss35"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 10 * 78f, CheckSnowballHits, 0, GFX.Game["snowball00"]));
+            BingoModule.CurrentLevel.Add(new TotalCollectableDisplay(96f + 11 * 78f, CheckKeys, 0, GFX.Game["key00"]));
         }
 
         public static void DestroyDisplayEntities() {
@@ -88,6 +89,15 @@ namespace Celeste.Mod.BingoUI {
                 if (myArea.Modes[(int)AreaMode.BSide].HeartGem)
                     redHeartCount++;
             return redHeartCount;
+        }
+
+        private static int CheckYellowHearts() {
+            List<AreaStats> areas = SaveData.Instance.Areas_Safe;
+            int yellowHeartCount = 0;
+            foreach (AreaStats myArea in areas)
+                if (myArea.Modes[(int)AreaMode.CSide].HeartGem)
+                    yellowHeartCount++;
+            return yellowHeartCount;
         }
 
         private static int CheckBinoculars() {

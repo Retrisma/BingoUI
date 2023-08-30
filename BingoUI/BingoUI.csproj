@@ -35,6 +35,9 @@
     <Content Include="Graphics\**\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>  
+    <Content Include="Dialog\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>  
     <Content Include="..\everest.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>  
