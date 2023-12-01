@@ -499,6 +499,7 @@ namespace Celeste.Mod.BingoUI {
                         result[3].Icon = ChapterIconStatus.Shown;
                         result[4].Icon = ChapterIconStatus.Shown;
                         result[5].Icon = ChapterIconStatus.Excited;
+                        result[10].Icon = ChapterIconStatus.Shown;
                     }
                     if (levels.Contains(5) || skipped == 6) {
                         result[5].Icon = ChapterIconStatus.Shown;
