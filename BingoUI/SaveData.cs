@@ -18,6 +18,9 @@ namespace Celeste.Mod.BingoUI {
         public int areaMode;
         public Vector2 pos;
 
+        public Binoculars() {
+        }
+
         public Binoculars(AreaKey lv, Vector2 myPos) {
             areaID = lv.ID;
             areaMode = (int)lv.Mode;
@@ -29,6 +32,9 @@ namespace Celeste.Mod.BingoUI {
         public int areaID;
         public int areaMode;
         public EntityID entity;
+
+        public Keys() {
+        }
 
         public Keys(AreaKey lv, EntityID entity) {
             areaID = lv.ID;
