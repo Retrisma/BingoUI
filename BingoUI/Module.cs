@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
-using System.Collections.Generic;
 
 namespace Celeste.Mod.BingoUI {
     public class BingoModule : EverestModule {

@@ -308,6 +308,7 @@ namespace Celeste.Mod.BingoUI {
         }
 
         private static void CustomModeUnlock(On.Celeste.OuiChapterPanel.orig_Reset orig, OuiChapterPanel self) {
+            var origCheat = SaveData.Instance.CheatMode;
             if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
                 SaveData.Instance.CheatMode = true;
                 var st = SaveData.Instance.CurrentSession_Safe?.OldStats;
@@ -317,7 +318,7 @@ namespace Celeste.Mod.BingoUI {
             }
             orig(self);
             if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
-                SaveData.Instance.CheatMode = false;
+                SaveData.Instance.CheatMode = origCheat;
 
                 var status = ChapterStatuses()[SaveData.Instance.LastArea_Safe.ID];
                 var modes = (System.Collections.IList)BingoUtils.GetInstanceField(typeof(OuiChapterPanel), self, "modes");
@@ -347,9 +348,14 @@ namespace Celeste.Mod.BingoUI {
 
         public static List<ChapterStatus> ChapterStatuses() {
             var result = new List<ChapterStatus>();
-            result.Add(new ChapterStatus { Icon = ChapterIconStatus.Shown, A = true } );
+            result.Add(new ChapterStatus { Icon = ChapterIconStatus.Shown, A = true });
+            var cheat = SaveData.Instance.CheatMode;
+            var defaultIcon = cheat ? ChapterIconStatus.Shown : ChapterIconStatus.Hidden;
             for (var i = 1; i <= 10; i++) {
-                result.Add(new ChapterStatus { Icon = ChapterIconStatus.Hidden, A = true, B = SaveData.Instance.Areas[i].Cassette, C = i != 8 && i != 10 && SaveData.Instance.UnlockedModes > 2 } );
+                result.Add(new ChapterStatus { Icon = defaultIcon, A = true, B = cheat || SaveData.Instance.Areas[i].Cassette, C = i != 8 && i != 10 && (cheat || SaveData.Instance.UnlockedModes > 2) });
+            }
+            if (cheat) {
+                return result;
             }
 
             foreach (var i in BingoModule.SaveData.ClearedAreas) {
