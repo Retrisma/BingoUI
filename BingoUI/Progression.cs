@@ -308,15 +308,19 @@ namespace Celeste.Mod.BingoUI {
         }
 
         private static void CustomModeUnlock(On.Celeste.OuiChapterPanel.orig_Reset orig, OuiChapterPanel self) {
+            var reveal = false;
+            AreaMode? mode = null;
             var origCheat = SaveData.Instance.CheatMode;
             if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
                 SaveData.Instance.CheatMode = true;
                 var st = SaveData.Instance.CurrentSession_Safe?.OldStats;
                 if (st != null) {
-                    st.Cassette = true; // ???
+                    reveal = !st.Cassette && SaveData.Instance.Areas_Safe[SaveData.Instance.LastArea_Safe.ID].Cassette;
+                    mode = SaveData.Instance.LastArea_Safe.Mode;
                 }
             }
             orig(self);
+            // invariant: all three tabs are present UNLESS reveal is true, in which case the bside is missing
             if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
                 SaveData.Instance.CheatMode = origCheat;
 
@@ -324,7 +328,7 @@ namespace Celeste.Mod.BingoUI {
                 var modes = (System.Collections.IList)BingoUtils.GetInstanceField(typeof(OuiChapterPanel), self, "modes");
                 if (modes.Count != 1) {
                     if (!status.C) {
-                        modes.RemoveAt(2);
+                        modes.RemoveAt(reveal ? 1 : 2);
                     }
                     if (!status.B) {
                         modes.RemoveAt(1);
@@ -334,14 +338,18 @@ namespace Celeste.Mod.BingoUI {
                     }
                 }
 
-                if (status.A) {
-                    self.Area.Mode = AreaMode.Normal;
-                } else if (status.B) {
-                    self.Area.Mode = AreaMode.BSide;
-                } else if (status.C) {
-                    self.Area.Mode = AreaMode.CSide;
+                if (mode != null) {
+                    self.Area.Mode = mode.Value;
                 } else {
-                    throw new Exception("Programming error in BingoUI: progression unlocked a chapter without any modes");
+                    if (status.A) {
+                        self.Area.Mode = AreaMode.Normal;
+                    } else if (status.B) {
+                        self.Area.Mode = AreaMode.BSide;
+                    } else if (status.C) {
+                        self.Area.Mode = AreaMode.CSide;
+                    } else {
+                        throw new Exception("Programming error in BingoUI: progression unlocked a chapter without any modes");
+                    }
                 }
             }
         }

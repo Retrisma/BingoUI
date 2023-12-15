@@ -11,14 +11,14 @@ namespace Celeste.Mod.BingoUI {
             this.PageTexture = "page";
             binocularList = binocs;
             this.table = new OuiJournalPage.Table().AddColumn(new OuiJournalPage.TextCell("RECORDS:\nBINOCULARS", new Vector2(1f, 0.5f), 0.7f, this.TextColor, 300f, false));
-            for (int i = 0; i < SaveData.Instance.UnlockedModes; i++) {
+            for (int i = 0; i < 3; i++) {
                 this.table.AddColumn(new OuiJournalPage.TextCell(Dialog.Clean("journal_mode_" + (AreaMode)i, null), this.TextJustify, 0.6f, this.TextColor, 240f, false));
             }
             bool[] array = new bool[]
             {
                 true,
-                SaveData.Instance.UnlockedModes >= 2,
-                SaveData.Instance.UnlockedModes >= 3
+                true,
+                true
             };
             int[] array2 = new int[3];
             foreach (AreaStats areaStats in SaveData.Instance.Areas_Safe) {
@@ -32,7 +32,7 @@ namespace Celeste.Mod.BingoUI {
                     }
                     OuiJournalPage.Row row = this.table.AddRow();
                     row.Add(new OuiJournalPage.TextCell(Dialog.Clean(areaData.Name, null), new Vector2(1f, 0.5f), 0.6f, this.TextColor, 0f, false));
-                    for (int j = 0; j < SaveData.Instance.UnlockedModes; j++) {
+                    for (int j = 0; j < 3; j++) {
                         int num = CountBinoculars(areaStats.ID_Safe, j);
                         bool flag2 = num > 0;
                         if (flag2) {
@@ -60,7 +60,7 @@ namespace Celeste.Mod.BingoUI {
 
             table.AddRow();
             OuiJournalPage.Row totalsRow = table.AddRow().Add(new OuiJournalPage.TextCell("TOTALS", new Vector2(1f, 0.5f), 0.7f, this.TextColor, 0f, false));
-            for (int j = 0; j < SaveData.Instance.UnlockedModes; j++)
+            for (int j = 0; j < 3; j++)
                 totalsRow.Add(new OuiJournalPage.TextCell(array2[j].ToString(), this.TextJustify, 0.6f, this.TextColor, 0f, false));
 
             bool flag4 = array[0] || array[1] || array[2];
@@ -68,7 +68,7 @@ namespace Celeste.Mod.BingoUI {
                 this.table.AddRow();
                 OuiJournalPage.Row row2 = this.table.AddRow();
                 row2.Add(new OuiJournalPage.TextCell(Dialog.Clean("journal_totals", null), new Vector2(1f, 0.5f), 0.7f, this.TextColor, 0f, false));
-                for (int k = 0; k < SaveData.Instance.UnlockedModes; k++) {
+                for (int k = 0; k < 3; k++) {
                     row2.Add(new OuiJournalPage.TextCell(Dialog.Deaths(array2[k]), this.TextJustify, 0.6f, this.TextColor, 0f, false));
                 }
                 bool flag5 = array[0] && array[1] && array[2];
