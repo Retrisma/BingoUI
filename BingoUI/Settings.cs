@@ -27,5 +27,14 @@
         public bool HideVariantsExceptGrabless { get; set; }
 
         public bool HideControls { get; set; }
+
+        [SettingRange(0, 23)]
+        public int CoreAHearts { get; set; } = 4;
+
+        [SettingRange(0, 23)]
+        public int CoreBHearts { get; set; } = 15;
+
+        [SettingRange(0, 23)]
+        public int CoreCHearts { get; set; } = 23;
     }
 }

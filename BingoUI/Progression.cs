@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using MonoMod.Cil;
+using Celeste.Editor;
 
 namespace Celeste.Mod.BingoUI {
     public static class CustomProgression {
@@ -23,6 +25,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiFileSelectSlot.OnNewGameSelected += AssignFileProgression;
             On.Celeste.OuiFileSelectSlot.Render += ShowBingoIcon;
             On.Celeste.OuiChapterPanel.Reset += CustomModeUnlock;
+            IL.Celeste.HeartGemDoor.ctor += HeartGateNumbers;
 
             ModeSetterHook = new Hook(
                     typeof(OuiChapterPanel).GetProperty("option", BindingFlags.Instance | BindingFlags.NonPublic).GetSetMethod(true),
@@ -41,6 +44,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiFileSelectSlot.OnNewGameSelected -= AssignFileProgression;
             On.Celeste.OuiFileSelectSlot.Render -= ShowBingoIcon;
             On.Celeste.OuiChapterPanel.Reset -= CustomModeUnlock;
+            IL.Celeste.HeartGemDoor.ctor -= HeartGateNumbers;
 
             ModeSetterHook?.Dispose();
             ModeSetterHook = null;
@@ -541,6 +545,51 @@ namespace Celeste.Mod.BingoUI {
             }
 
             return result;
+        }
+
+        private static void HeartGateNumbers(ILContext il) {
+            ILCursor cursor = new ILCursor(il);
+
+            if (!cursor.TryGotoNext(MoveType.Before, instr => instr.MatchStfld<HeartGemDoor>("Requires"))) {
+                throw new Exception ("Couldn't patch heart door");
+            }
+            cursor.EmitDelegate<Func<int, int>>(CheckRequiredHearts);
+        }
+
+        private static int CheckRequiredHearts(int orig) {
+            Logger.Log(LogLevel.Warn, "DEBUG", Engine.Scene.ToString());
+            Logger.Log(LogLevel.Warn, "DEBUG", Engine.NextScene.ToString());
+            var lvl = Engine.Scene as Level ?? Engine.NextScene as Level;
+            var loader = Engine.Scene as LevelLoader ?? Engine.NextScene as LevelLoader;
+            var editor = Engine.Scene as MapEditor ?? Engine.NextScene as MapEditor;
+            AreaKey area;
+            if (lvl != null) {
+                area = lvl.Session.Area;
+            } else if (loader != null) {
+                var session = (Session) typeof(LevelLoader).GetField("session", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(loader);
+                area = session.Area;
+                if (area == null) {
+                    throw new Exception("Hey. What the fuck.");
+                }
+            } else if (editor != null) {
+                area = (AreaKey) typeof(MapEditor).GetField("area", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+            } else {
+                throw new Exception("How are you loading this heart gate?");
+            }
+            if (!BingoModule.Settings.Enabled || area.ID != 9) {
+                return orig;
+            }
+
+            switch (area.Mode) {
+                case AreaMode.Normal:
+                    return BingoModule.Settings.CoreAHearts;
+                case AreaMode.BSide:
+                    return BingoModule.Settings.CoreBHearts;
+                case AreaMode.CSide:
+                    return BingoModule.Settings.CoreCHearts;
+                default:
+                    throw new Exception("What kind of mode is this?");
+            }
         }
     }
 
