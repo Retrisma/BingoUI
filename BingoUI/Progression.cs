@@ -576,6 +576,8 @@ namespace Celeste.Mod.BingoUI {
                             result[i].Icon = ChapterIconStatus.Shown;
                     }
                     result[2].Icon = levels.Contains(1) ? ChapterIconStatus.Shown : ChapterIconStatus.Hidden;
+                    if (levels.Contains(7))
+                        result[8].Icon = ChapterIconStatus.Excited;
                     result[9].Icon = ChapterIconStatus.Shown;
                     result[10].Icon = ChapterIconStatus.Shown;
                     break;
