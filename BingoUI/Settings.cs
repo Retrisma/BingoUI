@@ -5,6 +5,7 @@
         BananaSplit,
         RockyRoad,
         MintChip,
+        Raspberry,
     }
 
     public class BingoSettings : EverestModuleSettings {

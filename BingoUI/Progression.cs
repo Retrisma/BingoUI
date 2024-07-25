@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
@@ -17,6 +18,7 @@ namespace Celeste.Mod.BingoUI {
         private static Hook ModeSetterHook, ModeGetterHook;
 
         public static void Load() {
+            On.Celeste.SaveData.StartSession += RegisterEnteringChapter;
             On.Celeste.SaveData.RegisterCompletion += CustomLevelUnlock;
             On.Celeste.OuiChapterSelect.Update += CustomAssistEnable;
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock += CustomAssist;
@@ -36,6 +38,7 @@ namespace Celeste.Mod.BingoUI {
         }
 
         public static void Unload() {
+            On.Celeste.SaveData.StartSession -= RegisterEnteringChapter;
             On.Celeste.SaveData.RegisterCompletion -= CustomLevelUnlock;
             On.Celeste.OuiChapterSelect.Update -= CustomAssistEnable;
             On.Celeste.OuiChapterSelectIcon.AssistModeUnlock -= CustomAssist;
@@ -134,6 +137,14 @@ namespace Celeste.Mod.BingoUI {
                 orig(self);
                 SaveData.Instance.UnlockedAreas_Safe = origUnlock;
             }
+        }
+
+        public static void RegisterEnteringChapter(On.Celeste.SaveData.orig_StartSession startSession, SaveData saveData, Session session) {
+            var areas = BingoModule.SaveData.EnteredAreas;
+            var currentArea = session.Area.ID;
+            if (!areas.Contains(currentArea))
+                areas.Add(currentArea);
+            startSession(saveData, session);
         }
 
         public static void CustomLevelUnlock(On.Celeste.SaveData.orig_RegisterCompletion register, SaveData saveData, Session session) {
@@ -539,6 +550,34 @@ namespace Celeste.Mod.BingoUI {
                             }
                         }
                     }
+                    break;
+                case ProgressionType.Raspberry:
+                    result[0].Icon = ChapterIconStatus.Excited;
+                    if (!levels.Contains(0))
+                        break;
+                    var enteredNotClearedLevels = BingoModule.SaveData.EnteredAreas
+                        .Except(levels)
+                        .Where(l => l != 6 && l != 9 && l != 10)
+                        .ToList();
+                    var justUsedSkip = skipped != -1 && !levels.Contains(skipped) && !enteredNotClearedLevels.Contains(skipped);
+                    var usedSkipsNumber = skipped == -1 ? 0 : 1;
+                    for (var i = 0; i <= 8; i++) {
+                        if (i == 2 || i == 6)
+                            continue;
+                        if (!justUsedSkip && enteredNotClearedLevels.Count <= usedSkipsNumber && i != 8 && levels.Contains(1) == levels.Contains(2))
+                            result[i].Icon = ChapterIconStatus.Excited;
+                        else if (skipped == -1)
+                            result[i].Icon = ChapterIconStatus.Skippable;
+                        else
+                            result[i].Icon = ChapterIconStatus.Hidden;
+                    }
+                    for (var i = 0; i <= 8; i++) {
+                        if (i == 6 || enteredNotClearedLevels.Contains(i) || levels.Contains(i) || i == skipped)
+                            result[i].Icon = ChapterIconStatus.Shown;
+                    }
+                    result[2].Icon = levels.Contains(1) ? ChapterIconStatus.Shown : ChapterIconStatus.Hidden;
+                    result[9].Icon = ChapterIconStatus.Shown;
+                    result[10].Icon = ChapterIconStatus.Shown;
                     break;
                 default:
                     throw new InvalidOperationException("forgot a case");
