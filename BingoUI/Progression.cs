@@ -374,7 +374,7 @@ namespace Celeste.Mod.BingoUI {
         public static List<ChapterStatus> ChapterStatuses() {
             var result = new List<ChapterStatus>();
             result.Add(new ChapterStatus { Icon = ChapterIconStatus.Shown, A = true });
-            var cheat = SaveData.Instance.CheatMode;
+            var cheat = SaveData.Instance.CheatMode || BingoModule.SaveData.CustomProgression == ProgressionType.CheatMode;
             var defaultIcon = cheat ? ChapterIconStatus.Shown : ChapterIconStatus.Hidden;
             for (var i = 1; i <= 10; i++) {
                 result.Add(new ChapterStatus { Icon = defaultIcon, A = true, B = cheat || SaveData.Instance.Areas[i].Cassette, C = i != 8 && i != 10 && (cheat || SaveData.Instance.UnlockedModes > 2) });
@@ -583,6 +583,8 @@ namespace Celeste.Mod.BingoUI {
                     result[9].Icon = ChapterIconStatus.Shown;
                     result[10].Icon = ChapterIconStatus.Shown;
                     break;
+                case ProgressionType.CheatMode:
+                    throw new InvalidOperationException("cheat mode should have been caught earlier");
                 default:
                     throw new InvalidOperationException("forgot a case");
             }
