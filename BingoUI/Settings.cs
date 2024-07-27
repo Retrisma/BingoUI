@@ -2,6 +2,7 @@
     public enum ProgressionType {
         None,
         TournamentStandard,
+        CheatMode,
         BananaSplit,
         RockyRoad,
         MintChip,

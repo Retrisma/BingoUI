@@ -123,6 +123,8 @@ namespace Celeste.Mod.BingoUI {
             if (BingoModule.Settings.Enabled) {
                 BingoModule.SaveData.CustomProgression = BingoModule.Settings.CustomProgression;
                 SaveData.Instance.SetFlag("BINGO");
+                if (BingoModule.SaveData.CustomProgression == ProgressionType.CheatMode)
+                    SaveData.Instance.CheatMode = true;
             }
         }
 
