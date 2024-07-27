@@ -10,4 +10,4 @@ BINGOUI_PROGRESSION_TOURNAMENTSTANDARD=You get one assist skip. Reflection and S
 BINGOUI_PROGRESSION_BANANASPLIT=City unlocks Site and Ridge. Either of those unlock Farewell, and also Resort and Temple. Either of those unlock Reflection and Summit. Core is unlocked from the start and beating it counts for one level of progression.
 BINGOUI_PROGRESSION_ROCKYROAD=Beating a chapter unlocks the adjacent chapters on a 3x8 grid.
 BINGOUI_PROGRESSION_MINTCHIP=Site unlocks Resort and Ridge. Both of those must be cleared, or one must be cleared and the other skipped, to unlock Temple. Otherwise, the same as Tournament Standard.
-BINGOUI_PROGRESSION_RASPBERRY=Chapters are unlocked in any order. You get one assist skip to unlock next chapter before the finishing previous one. Site is only unlocked by finishing City. Reflection, Core and Farewell are available at all times and do not require finishing.
+BINGOUI_PROGRESSION_RASPBERRY=Chapters are unlocked in any order. You get one assist skip to unlock next chapter before finishing the previous one. Site is only unlocked by finishing City. Reflection, Core and Farewell are available at all times and do not require finishing.
