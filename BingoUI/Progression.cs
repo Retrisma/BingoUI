@@ -303,6 +303,7 @@ namespace Celeste.Mod.BingoUI {
                 IsAssistSkipping = true;
                 unlock(icon, () => {
                     BingoModule.SaveData.SkipUsed = icon.Area;
+                    BingoModule.SaveData.EnteredAreas.Add(icon.Area);
                     IsAssistSkipping = false;
                     onComplete();
                 });
@@ -561,12 +562,11 @@ namespace Celeste.Mod.BingoUI {
                         .Except(levels)
                         .Where(l => l != 6 && l != 9 && l != 10)
                         .ToList();
-                    var justUsedSkip = skipped != -1 && !levels.Contains(skipped) && !enteredNotClearedLevels.Contains(skipped);
                     var usedSkipsNumber = skipped == -1 ? 0 : 1;
                     for (var i = 0; i <= 8; i++) {
                         if (i == 2 || i == 6)
                             continue;
-                        if (!justUsedSkip && enteredNotClearedLevels.Count <= usedSkipsNumber && i != 8 && levels.Contains(1) == levels.Contains(2))
+                        if (enteredNotClearedLevels.Count <= usedSkipsNumber && i != 8 && levels.Contains(1) == levels.Contains(2))
                             result[i].Icon = ChapterIconStatus.Excited;
                         else if (skipped == -1)
                             result[i].Icon = ChapterIconStatus.Skippable;
