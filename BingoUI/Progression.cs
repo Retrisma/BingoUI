@@ -478,7 +478,7 @@ namespace Celeste.Mod.BingoUI {
                             above = 9;
                         }
                         if (below == 8) {
-                            below = 9;
+                            below = 7;
                         }
 
                         result[j].A = areas[j].Modes[1].Completed || areas[below].Modes[0].Completed || areas[above].Modes[0].Completed;
