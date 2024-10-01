@@ -25,6 +25,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiFileSelectSlot.OnNewGameSelected += AssignFileProgression;
             On.Celeste.OuiFileSelectSlot.Render += ShowBingoIcon;
             On.Celeste.OuiChapterPanel.Reset += CustomModeUnlock;
+            On.Celeste.OuiChapterPanel.IsStart += DontAlwaysAdvance;
             IL.Celeste.HeartGemDoor.ctor += HeartGateNumbers;
 
             ModeSetterHook = new Hook(
@@ -44,6 +45,7 @@ namespace Celeste.Mod.BingoUI {
             On.Celeste.OuiFileSelectSlot.OnNewGameSelected -= AssignFileProgression;
             On.Celeste.OuiFileSelectSlot.Render -= ShowBingoIcon;
             On.Celeste.OuiChapterPanel.Reset -= CustomModeUnlock;
+            On.Celeste.OuiChapterPanel.IsStart -= DontAlwaysAdvance;
             IL.Celeste.HeartGemDoor.ctor -= HeartGateNumbers;
 
             ModeSetterHook?.Dispose();
@@ -102,6 +104,17 @@ namespace Celeste.Mod.BingoUI {
                 }
             }
             throw new Exception("what in the name of the lord did you do do this poor class");
+        }
+
+        private static bool DontAlwaysAdvance(On.Celeste.OuiChapterPanel.orig_IsStart orig, OuiChapterPanel self, Overworld overworld, Overworld.StartMode start) {
+            if (SaveData.Instance != null && SaveData.Instance.CurrentSession != null && start == Overworld.StartMode.AreaComplete) {
+                var chstat = ChapterStatuses();
+                var nextlvl = SaveData.Instance.CurrentSession.Area.ID + 1;
+                if (nextlvl >= chstat.Count || chstat[nextlvl].Icon == ChapterIconStatus.Hidden || chstat[nextlvl].Icon == ChapterIconStatus.Skippable) {
+                    start = Overworld.StartMode.AreaQuit;
+                }
+            }
+            return orig(self, overworld, start);
         }
 
         private static void ShowBingoIcon(On.Celeste.OuiFileSelectSlot.orig_Render orig, OuiFileSelectSlot self) {
