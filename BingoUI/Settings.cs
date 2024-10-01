@@ -2,9 +2,11 @@
     public enum ProgressionType {
         None,
         TournamentStandard,
+        CheatMode,
         BananaSplit,
         RockyRoad,
         MintChip,
+        Raspberry,
     }
 
     public class BingoSettings : EverestModuleSettings {
