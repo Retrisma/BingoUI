@@ -110,7 +110,7 @@ namespace Celeste.Mod.BingoUI {
         }
 
         private static bool DontAlwaysAdvance(On.Celeste.OuiChapterPanel.orig_IsStart orig, OuiChapterPanel self, Overworld overworld, Overworld.StartMode start) {
-            if (SaveData.Instance != null && SaveData.Instance.CurrentSession != null && start == Overworld.StartMode.AreaComplete) {
+            if (SaveData.Instance != null && SaveData.Instance.CurrentSession != null && start == Overworld.StartMode.AreaComplete && BingoModule.SaveData.CustomProgression != ProgressionType.None) {
                 var chstat = ChapterStatuses();
                 var nextlvl = SaveData.Instance.CurrentSession.Area.ID + 1;
                 if (nextlvl >= chstat.Count || chstat[nextlvl].Icon == ChapterIconStatus.Hidden || chstat[nextlvl].Icon == ChapterIconStatus.Skippable) {
@@ -598,6 +598,8 @@ namespace Celeste.Mod.BingoUI {
                     break;
                 case ProgressionType.CheatMode:
                     throw new InvalidOperationException("cheat mode should have been caught earlier");
+                case ProgressionType.None:
+                    throw new InvalidOperationException("This function should not be called for vanilla progression");
                 default:
                     throw new InvalidOperationException("forgot a case");
             }

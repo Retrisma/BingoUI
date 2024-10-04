@@ -1,5 +1,5 @@
 - Name: BingoUI
-  Version: 1.2.11
+  Version: 1.2.12
   DLL: BingoUI.dll
   Dependencies:
     - Name: Everest
