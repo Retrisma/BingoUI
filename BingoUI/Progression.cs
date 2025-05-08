@@ -110,7 +110,7 @@ namespace Celeste.Mod.BingoUI {
         }
 
         private static bool DontAlwaysAdvance(On.Celeste.OuiChapterPanel.orig_IsStart orig, OuiChapterPanel self, Overworld overworld, Overworld.StartMode start) {
-            if (SaveData.Instance != null && SaveData.Instance.CurrentSession != null && start == Overworld.StartMode.AreaComplete && BingoModule.SaveData.CustomProgression != ProgressionType.None) {
+            if (SaveData.Instance != null && SaveData.Instance.CurrentSession != null && start == Overworld.StartMode.AreaComplete && BingoModule.SaveData.CustomProgression != ProgressionType.None && SaveData.Instance.LevelSet == "Celeste") {
                 var chstat = ChapterStatuses();
                 var nextlvl = SaveData.Instance.CurrentSession.Area.ID + 1;
                 if (nextlvl >= chstat.Count || chstat[nextlvl].Icon == ChapterIconStatus.Hidden || chstat[nextlvl].Icon == ChapterIconStatus.Skippable) {
@@ -163,21 +163,25 @@ namespace Celeste.Mod.BingoUI {
         }
 
         public static void CustomLevelUnlock(On.Celeste.SaveData.orig_RegisterCompletion register, SaveData saveData, Session session) {
-            var areas = BingoModule.SaveData.ClearedAreas;
-            if (!areas.Contains(session.Area.ID)) {
-                areas.Add(session.Area.ID);
+            if (saveData.LevelSet == "Celeste") {
+                var areas = BingoModule.SaveData.ClearedAreas;
+                if (!areas.Contains(session.Area.ID)) {
+                    areas.Add(session.Area.ID);
+                }
+                bool clearedCore = false;
+                int oldProgress = 0;
+                if (session.Area.ID == 9) {
+                    clearedCore = true;
+                    oldProgress = saveData.UnlockedAreas_Safe;
+                }
+                register(saveData, session);
+                if (session.Area.ID == 5 && BingoModule.SaveData.CustomProgression == ProgressionType.TournamentStandard && BingoModule.Settings.Enabled)
+                    saveData.UnlockedAreas_Safe = 7;
+                if (BingoModule.SaveData.CustomProgression == ProgressionType.TournamentStandard && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
+                    saveData.UnlockedAreas_Safe = oldProgress;
+            } else {
+                register(saveData, session);
             }
-            bool clearedCore = false;
-            int oldProgress = 0;
-            if (session.Area.ID == 9) {
-                clearedCore = true;
-                oldProgress = saveData.UnlockedAreas_Safe;
-            }
-            register(saveData, session);
-            if (session.Area.ID == 5 && BingoModule.SaveData.CustomProgression == ProgressionType.TournamentStandard && BingoModule.Settings.Enabled)
-                saveData.UnlockedAreas_Safe = 7;
-            if (BingoModule.SaveData.CustomProgression == ProgressionType.TournamentStandard && BingoModule.Settings.Enabled && clearedCore && oldProgress != 9)
-                saveData.UnlockedAreas_Safe = oldProgress;
         }
 
 
@@ -342,7 +346,7 @@ namespace Celeste.Mod.BingoUI {
             var reveal = false;
             AreaMode? mode = null;
             var origCheat = SaveData.Instance.CheatMode;
-            if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
+            if (BingoModule.SaveData.CustomProgression != ProgressionType.None && SaveData.Instance.LevelSet == "Celeste") {
                 SaveData.Instance.CheatMode = true;
                 var st = SaveData.Instance.CurrentSession_Safe?.OldStats;
                 if (st != null) {
@@ -352,7 +356,7 @@ namespace Celeste.Mod.BingoUI {
             }
             orig(self);
             // invariant: all three tabs are present UNLESS reveal is true, in which case the bside is missing
-            if (BingoModule.SaveData.CustomProgression != ProgressionType.None) {
+            if (BingoModule.SaveData.CustomProgression != ProgressionType.None && SaveData.Instance.LevelSet == "Celeste") {
                 SaveData.Instance.CheatMode = origCheat;
 
                 var status = ChapterStatuses()[SaveData.Instance.LastArea_Safe.ID];
